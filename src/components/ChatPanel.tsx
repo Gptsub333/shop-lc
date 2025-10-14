@@ -603,7 +603,7 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
   const nextPlayTimeRef = useRef(0);
   const [currentSampleRate, setCurrentSampleRate] = useState(8000); // Start with 8kHz (matches config)
 
-  const BACKEND_WS_URL = import.meta.env.VITE_BACKEND_URL_WS || 'ws://34.228.228.93:5001';
+  const BACKEND_WS_URL = import.meta.env.VITE_BACKEND_URL_WS || 'wss://34.228.228.93:5001';
 
   // ------------------------------------------------------------
   // WebSocket setup for messages (text + transcription stream)
