@@ -603,7 +603,10 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
   const nextPlayTimeRef = useRef(0);
   const [currentSampleRate, setCurrentSampleRate] = useState(8000); // Start with 8kHz (matches config)
 
-  const BACKEND_WS_URL = import.meta.env.VITE_BACKEND_URL_WS || 'wss://34.228.228.93:5001';
+  // const BACKEND_WS_URL = import.meta.env.VITE_BACKEND_URL_WS || 'wss://34.228.228.93:5001';
+  // const BACKEND_WS_URL = 'http://34.228.228.93:5001';
+  const BACKEND_WS_URL = 'wss://shoplc.holbox.ai';
+
 
   // ------------------------------------------------------------
   // WebSocket setup for messages (text + transcription stream)
@@ -1017,7 +1020,7 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
         {/* Sample Rate Selector */}
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        {/*  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-xs font-semibold text-blue-800 mb-2">Audio Sample Rate: {currentSampleRate}Hz</p>
           <div className="flex gap-2 flex-wrap">
             {[8000, 16000, 24000, 48000].map(rate => (
@@ -1034,7 +1037,7 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
             ))}
           </div>
           <p className="text-xs text-blue-600 mt-2">👆 Try different rates if audio sounds wrong</p>
-        </div>
+        </div> */}
 
         {messages.map((msg) => (
           <div
@@ -1091,7 +1094,7 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
           <Send className="h-5 w-5" />
         </button>
       </div>
-    </div>
+    </div >
   );
 };
 
