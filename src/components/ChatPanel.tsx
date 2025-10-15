@@ -503,7 +503,14 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
                     // Extract just the filename from the full path
                     const filename = imagePath.split('/').pop() || imagePath;
                     // Construct the image URL (adjust this based on your backend setup)
-                    const imageUrl = `${BACKEND_WS_URL.replace('wss://', 'https://').replace('ws://', 'http://')}/products/${filename}`;
+                    // const imageUrl = `${BACKEND_WS_URL.replace('wss://', 'https://').replace('ws://', 'http://')}/products/${filename}`;
+
+                    console.log("Image path:", imagePath);
+
+                    const imageUrl = `http://34.228.228.93:8001/images/${filename}`;
+
+                    console.log("Image URL:", imageUrl);
+
                     
                     return (
                       <div 
