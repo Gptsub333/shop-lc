@@ -12,6 +12,10 @@ interface Message {
   sender: "user" | "assistant";
   timestamp: number;
   images?: { [key: string]: string }; // Optional: image URLs with names
+  virtualTryon?: {
+    studio_images: string[];
+    tryon_images: string[];
+  };
 }
 
 interface WebSocketMessage {
@@ -21,6 +25,9 @@ interface WebSocketMessage {
     session_id?: string;
     audio?: string;
     images?: { [key: string]: string };
+    status?: string;
+    studio_images?: string[];
+    tryon_images?: string[];
     [key: string]: any;
   };
 }
@@ -369,6 +376,13 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
         appendImageMessage(data.data.images || {});
         console.log("🖼️ Image list received:", data.data.images);
         break;
+      case "virtual_tryon":
+        appendVirtualTryonMessage(
+          data.data.studio_images || [],
+          data.data.tryon_images || []
+        );
+        console.log("👔 Virtual try-on received");
+        break;
       case "audio_chunk":
         // Don't play audio here - it's already being played through /client-audio socket
         console.log("📻 Audio chunk received (skipping - using direct audio stream)");
@@ -402,6 +416,20 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
       sender: "assistant",
       timestamp: Date.now(),
       images: images
+    };
+    setMessages((prev) => [...prev, newMsg]);
+  };
+
+  const appendVirtualTryonMessage = (studioImages: string[], tryonImages: string[]) => {
+    const newMsg: Message = {
+      id: `assistant-${Date.now()}-${Math.random()}`,
+      text: "Here's your virtual try-on result:",
+      sender: "assistant",
+      timestamp: Date.now(),
+      virtualTryon: {
+        studio_images: studioImages,
+        tryon_images: tryonImages
+      }
     };
     setMessages((prev) => [...prev, newMsg]);
   };
@@ -504,13 +532,7 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
                     const filename = imagePath.split('/').pop() || imagePath;
                     // Construct the image URL (adjust this based on your backend setup)
                     // const imageUrl = `${BACKEND_WS_URL.replace('wss://', 'https://').replace('ws://', 'http://')}/products/${filename}`;
-
-                    console.log("Image path:", imagePath);
-
                     const imageUrl = `http://34.228.228.93:8001/images/${filename}`;
-
-                    console.log("Image URL:", imageUrl);
-
                     
                     return (
                       <div 
@@ -528,6 +550,63 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
                         />
                         <div className="p-2">
                           <p className="text-sm font-medium text-gray-800">{imageName}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Display virtual try-on results */}
+              {msg.virtualTryon && (
+                <div className="px-3 pb-3 space-y-3">
+                  {msg.virtualTryon.studio_images.map((studioPath, index) => {
+                    const studioFilename = studioPath.split('/').pop() || studioPath;
+                    const tryonFilename = msg.virtualTryon!.tryon_images[index]?.split('/').pop() || '';
+                    
+                    // Construct image URLs
+                    // const studioUrl = `${BACKEND_WS_URL.replace('wss://', 'https://').replace('ws://', 'http://')}/virtual_tryon/${studioFilename}`;
+                    // const tryonUrl = `${BACKEND_WS_URL.replace('wss://', 'https://').replace('ws://', 'http://')}/virtual_tryon/${tryonFilename}`;
+                    
+
+                    const studioUrl = `http://34.228.228.93:8001/virtualtryon/${studioFilename}`;
+                    const tryonUrl = `http://34.228.228.93:8001/virtualtryon/${tryonFilename}`;
+
+                    console.log("Studio URL:", studioUrl);
+                    console.log("Try-on URL:", tryonUrl);
+
+                    return (
+                      <div key={index} className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          {/* Studio/Original Image */}
+                          <div className="bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                            <img 
+                              src={studioUrl}
+                              alt="Studio"
+                              className="w-full h-48 object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%23ddd"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999">Studio</text></svg>';
+                              }}
+                            />
+                            <div className="p-2 bg-blue-50">
+                              <p className="text-xs font-semibold text-blue-800 text-center">Original</p>
+                            </div>
+                          </div>
+
+                          {/* Try-on Image */}
+                          <div className="bg-gray-50 rounded-lg overflow-hidden border border-green-200">
+                            <img 
+                              src={tryonUrl}
+                              alt="Virtual Try-on"
+                              className="w-full h-48 object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%23ddd"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999">Try-on</text></svg>';
+                              }}
+                            />
+                            <div className="p-2 bg-green-50">
+                              <p className="text-xs font-semibold text-green-800 text-center">Virtual Try-on</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     );
