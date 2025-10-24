@@ -57,7 +57,8 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
   const nextPlayTimeRef = useRef(0);
   const [currentSampleRate, setCurrentSampleRate] = useState(8000); // Start with 8kHz (matches config)
 
-  const BACKEND_WS_URL = 'wss://shoplc.holbox.ai';
+  // const BACKEND_WS_URL = 'wss://shoplc.holbox.ai';
+  const BACKEND_WS_URL = 'ws://34.228.228.93:5000';
 
   // ------------------------------------------------------------
   // WebSocket setup for messages (text + transcription stream)
@@ -532,7 +533,7 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
                     const filename = imagePath.split('/').pop() || imagePath;
                     // Construct the image URL (adjust this based on your backend setup)
                     // const imageUrl = `${BACKEND_WS_URL.replace('wss://', 'https://').replace('ws://', 'http://')}/products/${filename}`;
-                    const imageUrl = `http://34.228.228.93:8001/images/${filename}`;
+                    const imageUrl = `https://shoplc.holbox.ai/api/images/${filename}`;
                     
                     return (
                       <div 
@@ -569,8 +570,8 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
                     // const tryonUrl = `${BACKEND_WS_URL.replace('wss://', 'https://').replace('ws://', 'http://')}/virtual_tryon/${tryonFilename}`;
                     
 
-                    const studioUrl = `http://34.228.228.93:8001/virtualtryon/${studioFilename}`;
-                    const tryonUrl = `http://34.228.228.93:8001/virtualtryon/${tryonFilename}`;
+                    const studioUrl = `https://shoplc.holbox.ai/api/virtualtryon/${studioFilename}`;
+                    const tryonUrl = `https://shoplc.holbox.ai/api/virtualtryon/${tryonFilename}`;
 
                     console.log("Studio URL:", studioUrl);
                     console.log("Try-on URL:", tryonUrl);
@@ -642,10 +643,10 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
           placeholder="Type your message..."
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendTextMessage()}
+          // onKeyDown={(e) => e.key === "Enter" && sendTextMessage()}
         />
         <button
-          onClick={sendTextMessage}
+          // onClick={sendTextMessage}
           className="h-12 w-12 rounded-xl bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600"
         >
           <Send className="h-5 w-5" />
