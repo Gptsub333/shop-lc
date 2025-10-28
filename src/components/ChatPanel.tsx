@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { X, Send, Mic, MessageCircle, User, Bot } from "lucide-react";
+import { X, Send, Mic, MessageCircle, User, Bot, Camera } from "lucide-react";
+
+
 
 interface ChatPanelProps {
   isOpen: boolean;
@@ -38,6 +40,10 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [userInput, setUserInput] = useState("");
   const [micActive, setMicActive] = useState(false);
+  // image capturing state
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const micSocket = useRef<WebSocket | null>(null);
@@ -57,8 +63,11 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
   const nextPlayTimeRef = useRef(0);
   const [currentSampleRate, setCurrentSampleRate] = useState(8000); // Start with 8kHz (matches config)
 
-  const BACKEND_WS_URL = 'wss://shoplc.holbox.ai';
-  // const BACKEND_WS_URL = 'ws://34.228.228.93:5001';
+
+
+
+  // const BACKEND_WS_URL = 'wss://shoplc.holbox.ai';
+  const BACKEND_WS_URL = 'ws://34.228.228.93:5000';
 
   // ------------------------------------------------------------
   // WebSocket setup for messages (text + transcription stream)
@@ -473,6 +482,78 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
 
   if (!isOpen) return null;
 
+
+  //------------------------------------------------------------
+  //Camera Functionality
+  //------------------------------------------------------------
+  const startCamera = async () => {
+    try {
+      setCameraOpen(true);
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" } // mobile: switch to "environment" for rear camera
+      });
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+    } catch (err) {
+      console.error("Camera access error:", err);
+      alert("Unable to access camera. Check permissions.");
+    }
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+
+    const width = videoRef.current.videoWidth;
+    const height = videoRef.current.videoHeight;
+
+    canvasRef.current.width = width;
+    canvasRef.current.height = height;
+
+    const ctx = canvasRef.current.getContext("2d");
+    if (!ctx) return;
+
+    ctx.drawImage(videoRef.current, 0, 0, width, height);
+    const base64Image = canvasRef.current.toDataURL("image/jpeg");
+
+    // Display in UI
+    appendMessage("user", "📸 Image sent!");
+
+    setMessages(prev => [
+      ...prev,
+      {
+        id: `user-img-${Date.now()}`,
+        text: "",
+        sender: "user",
+        timestamp: Date.now(),
+        images: {
+          captured: base64Image
+        }
+      }
+    ]);
+
+    // Send to backend
+    wsRef.current?.send(JSON.stringify({
+      type: "send_image",
+      data: { image: base64Image }
+    }));
+
+    closeCamera();
+  };
+
+  const closeCamera = () => {
+    setCameraOpen(false);
+
+    const stream = videoRef.current?.srcObject as MediaStream;
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+  };
+
+
   // ------------------------------------------------------------
   // Render
   // ------------------------------------------------------------
@@ -524,7 +605,7 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
                 }`}
             >
               <div className="p-3">{msg.text}</div>
-              
+
               {/* Display images if present */}
               {msg.images && Object.keys(msg.images).length > 0 && (
                 <div className="px-3 pb-3 space-y-2">
@@ -534,13 +615,13 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
                     // Construct the image URL (adjust this based on your backend setup)
                     // const imageUrl = `${BACKEND_WS_URL.replace('wss://', 'https://').replace('ws://', 'http://')}/products/${filename}`;
                     const imageUrl = `https://shoplc.holbox.ai/api/images/${filename}`;
-                    
+
                     return (
-                      <div 
-                        key={index} 
+                      <div
+                        key={index}
                         className="bg-gray-50 rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition-shadow"
                       >
-                        <img 
+                        <img
                           src={imageUrl}
                           alt={imageName}
                           className="w-full h-48 object-cover"
@@ -564,11 +645,11 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
                   {msg.virtualTryon.studio_images.map((studioPath, index) => {
                     const studioFilename = studioPath.split('/').pop() || studioPath;
                     const tryonFilename = msg.virtualTryon!.tryon_images[index]?.split('/').pop() || '';
-                    
+
                     // Construct image URLs
                     // const studioUrl = `${BACKEND_WS_URL.replace('wss://', 'https://').replace('ws://', 'http://')}/virtual_tryon/${studioFilename}`;
                     // const tryonUrl = `${BACKEND_WS_URL.replace('wss://', 'https://').replace('ws://', 'http://')}/virtual_tryon/${tryonFilename}`;
-                    
+
 
                     const studioUrl = `https://shoplc.holbox.ai/api/virtualtryon/${studioFilename}`;
                     const tryonUrl = `https://shoplc.holbox.ai/api/virtualtryon/${tryonFilename}`;
@@ -581,7 +662,7 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
                         <div className="grid grid-cols-2 gap-2">
                           {/* Studio/Original Image */}
                           <div className="bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
-                            <img 
+                            <img
                               src={studioUrl}
                               alt="Studio"
                               className="w-full h-48 object-cover"
@@ -596,7 +677,7 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
 
                           {/* Try-on Image */}
                           <div className="bg-gray-50 rounded-lg overflow-hidden border border-green-200">
-                            <img 
+                            <img
                               src={tryonUrl}
                               alt="Virtual Try-on"
                               className="w-full h-48 object-cover"
@@ -626,7 +707,8 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t bg-white flex items-center gap-2">
+      <div className="p-4 border-t bg-white flex items-center justify-center gap-2">
+
         <button
           onClick={startMicStream}
           className={`h-12 w-12 rounded-xl flex items-center justify-center transition-all ${micActive
@@ -637,20 +719,51 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
         >
           <Mic className="h-5 w-5" />
         </button>
-        <input
+        <button
+          onClick={startCamera}
+          className="h-12 w-12 rounded-xl flex bg-green-600 items-center justify-center text-white hover:bg-green-700"
+          title="Open Camera"
+        >
+          <Camera className="h-5 w-5" />
+        </button>
+
+        {/* <input
           type="text"
           className="flex-1 h-12 border-2 border-gray-200 rounded-xl px-4 focus:outline-none"
           placeholder="Type your message..."
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
-          // onKeyDown={(e) => e.key === "Enter" && sendTextMessage()}
-        />
-        <button
+        // onKeyDown={(e) => e.key === "Enter" && sendTextMessage()}
+        /> */ }
+        {/* <button
           // onClick={sendTextMessage}
           className="h-12 w-12 rounded-xl bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600"
         >
           <Send className="h-5 w-5" />
-        </button>
+        </button> */}
+        {cameraOpen && (
+          <div className="absolute inset-0 bg-black/70 z-50 flex flex-col items-center justify-center">
+            <video ref={videoRef} className="w-full max-w-sm rounded-lg shadow-lg" />
+
+            <div className="flex gap-4 mt-4">
+              <button
+                onClick={capturePhoto}
+                className="px-6 py-3 bg-blue-500 rounded-lg text-white font-semibold"
+              >
+                Capture
+              </button>
+              <button
+                onClick={closeCamera}
+                className="px-6 py-3 bg-gray-500 rounded-lg text-white font-semibold"
+              >
+                Cancel
+              </button>
+            </div>
+
+            <canvas ref={canvasRef} hidden />
+          </div>
+        )}
+
       </div>
     </div>
   );
