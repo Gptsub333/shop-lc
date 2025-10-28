@@ -66,8 +66,8 @@ const ChatPanel = ({ isOpen, onClose }: ChatPanelProps) => {
 
 
 
-  // const BACKEND_WS_URL = 'wss://shoplc.holbox.ai';
-  const BACKEND_WS_URL = 'ws://34.228.228.93:5000';
+  const BACKEND_WS_URL = 'wss://shoplc.holbox.ai';
+  // const BACKEND_WS_URL = 'ws://34.228.228.93:5000';
 
   // ------------------------------------------------------------
   // WebSocket setup for messages (text + transcription stream)
